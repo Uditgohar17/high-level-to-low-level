@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+    <title>High-Level to Low-Level Architecture Tool</title>
+    <style>
+        /* Modern and responsive styling */
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            max-width: 100vw;
+            overflow-x: hidden;
+        }
+        header {
+            background: rgba(0,0,0,0.3);
+            padding: 1rem;
+            text-align: center;
+            font-size: 1.3rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        label {
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+        }
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+            max-height: 200px;
+            font-family: monospace;
+            font-size: 1rem;
+            padding: 0.5rem;
+            border-radius: 6px;
+            border: none;
+            outline: none;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+        button {
+            margin-top: 1rem;
+            background-color: #5a4fcf;
+            border: none;
+            color: white;
+            padding: 0.8rem 1.2rem;
+            font-size: 1rem;
+            font-weight: 700;
+            border-radius: 6px;
+            cursor: pointer;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.3);
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #836fff;
+        }
+        #output {
+            margin-top: 1.5rem;
+            background: rgba(0,0,0,0.2);
+            border-radius: 8px;
+            padding: 1rem;
+            color: #eaeaea;
+            font-size: 0.95rem;
+            overflow-y: auto;
+            max-height: 350px;
+        }
+        h2 {
+            border-bottom: 2px solid #836fff;
+            padding-bottom: 0.2rem;
+            margin-top: 1rem;
+            color: #d3d3ff;
+        }
+        pre {
+            background: #292b38;
+            padding: 0.7rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        @media (max-width: 400px) {
+            main {
+                padding: 0.5rem;
+            }
+            button {
+                width: 100%;
+                padding: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>High-Level to Low-Level Architecture Prototype Tool</header>
+    <main>
+        <label for="reqInput">Enter High-Level Business Requirement:</label>
+        <textarea id="reqInput" placeholder="E.g., Build an e-commerce system that manages users, products, orders, and payments with secure authentication and inventory tracking."></textarea>
+        <button id="generateBtn">Generate Low-Level Architecture</button>
+        <section id="output" aria-live="polite"></section>
+    </main>
+    <script>
+        // Simple prototype logic to parse high-level requirements and output modules, schemas, pseudocode
+        function capitalizeFirst(str) {
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        }
+
+        function extractModules(text) {
+            let modules = [];
+            const lowerText = text.toLowerCase();
+            const keywords = ["manage", "handle", "support", "with", "including"];
+
+            for (const kw of keywords) {
+                if (lowerText.includes(kw)) {
+                    const after = lowerText.split(kw)[1];
+                    if (after) {
+                        const parts = after.split(/,| and | & /);
+                        parts.forEach(p => {
+                            let cleaned = p.trim().replace(/[.]/g, "");
+                            if(cleaned.length > 0 && !modules.includes(cleaned)){
+                                modules.push(cleaned);
+                            }
+                        });
+                        if (modules.length > 0) break;
+                    }
+                }
+            }
+
+            if (modules.length === 0) {
+                const commonWords = ['build', 'system', 'application', 'business', 'requirement', 'process', 'that', 'and', 'the', 'with', 'a', 'an', 'to', 'of', 'for', 'on', 'in'];
+                const words = text.toLowerCase().match(/\b\w+\b/g) || [];
+                words.forEach(w => {
+                    if (!commonWords.includes(w) && w.length > 2 && !modules.includes(w)) {
+                        modules.push(w);
+                    }
+                });
+                if(modules.length > 5) modules = modules.slice(0, 5);
+            }
+            return modules.map(m => capitalizeFirst(m));
+        }
+
+        function createSchemas(modules) {
+            const schemas = {};
+            modules.forEach(module => {
+                const modLower = module.toLowerCase();
+                if (modLower === 'user' || modLower === 'users') {
+                    schemas[module] = [
+                        { field: 'id', type: 'UUID', description: 'Unique identifier' },
+                        { field: 'name', type: 'String', description: 'Full name' },
+                        { field: 'email', type: 'String', description: 'Email address' },
+                        { field: 'password', type: 'String', description: 'Hashed password' },
+                        { field: 'createdAt', type: 'DateTime', description: 'Account creation timestamp' }
+                    ];
+                } else if (modLower === 'product' || modLower === 'products') {
+                    schemas[module] = [
+                        { field: 'id', type: 'UUID', description: 'Product identifier' },
+                        { field: 'name', type: 'String', description: 'Product name' },
+                        { field: 'description', type: 'String', description: 'Detailed description' },
+                        { field: 'price', type: 'Decimal', description: 'Price in USD' },
+                        { field: 'stockQuantity', type: 'Integer', description: 'Inventory count' }
+                    ];
+                } else if (modLower === 'order' || modLower === 'orders') {
+                    schemas[module] = [
+                        { field: 'id', type: 'UUID', description: 'Order identifier' },
+                        { field: 'userId', type: 'UUID', description: 'Reference to user' },
+                        { field: 'products', type: 'List<Product>', description: 'List of ordered products' },
+                        { field: 'status', type: 'String', description: 'Order status' },
+                        { field: 'totalAmount', type: 'Decimal', description: 'Total order value' },
+                        { field: 'createdAt', type: 'DateTime', description: 'Order date/time' }
+                    ];
+                } else if (modLower === 'payment' || modLower === 'payments') {
+                    schemas[module] = [
+                        { field: 'id', type: 'UUID', description: 'Payment identifier' },
+                        { field: 'orderId', type: 'UUID', description: 'Related order' },
+                        { field: 'amount', type: 'Decimal', description: 'Payment amount' },
+                        { field: 'paymentMethod', type: 'String', description: 'e.g., Credit Card, Paypal' },
+                        { field: 'status', type: 'String', description: 'Payment status' },
+                        { field: 'paidAt', type: 'DateTime', description: 'Payment timestamp' }
+                    ];
+                } else if (modLower === 'inventory' || modLower === 'inventory tracking') {
+                    schemas[module] = [
+                        { field: 'productId', type: 'UUID', description: 'Related product' },
+                        { field: 'quantityAvailable', type: 'Integer', description: 'Available stock' },
+                        { field: 'lastUpdated', type: 'DateTime', description: 'Last stock update' }
+                    ];
+                } else if (modLower === 'authentication' || modLower === 'auth' || modLower === 'security') {
+                    schemas[module] = [
+                        { field: 'userId', type: 'UUID', description: 'User identifier' },
+                        { field: 'token', type: 'String', description: 'Authentication token' },
+                        { field: 'expiresAt', type: 'DateTime', description: 'Token expiry time' }
+                    ];
+                } else {
+                    schemas[module] = [
+                        { field: 'id', type: 'UUID', description: 'Unique identifier' },
+                        { field: 'name', type: 'String', description: 'Name or title' }
+                    ];
+                }
+            });
+            return schemas;
+        }
+
+        function generatePseudoCode(modules) {
+            const pseudoCodesnippets = {};
+            modules.forEach(module => {
+                const modLower = module.toLowerCase();
+                let code = '';
+                if (modLower === 'user' || modLower === 'users') {
+                    code = `
+Function RegisterUser(name, email, password):
+    Validate email uniqueness
+    hashedPassword = Hash(password)
+    userId = CreateRecord("Users", {name, email, hashedPassword})
+    Return userId
+
+Function AuthenticateUser(email, password):
+    user = GetUserByEmail(email)
+    If user and VerifyHash(password, user.hashedPassword):
+        token = GenerateAuthToken(user.id)
+        Return token
+    Else:
+        Return AuthenticationFailed
+        `.trim();
+                } else if (modLower === 'order' || modLower === 'orders') {
+                    code = `
+Function CreateOrder(userId, productList):
+    total = CalculateTotal(productList)
+    orderId = CreateRecord("Orders", {userId, productList, status: "Pending", totalAmount: total, createdAt: CurrentDateTime()})
+    DeductInventory(productList)
+    Return orderId
+
+Function GetOrderStatus(orderId):
+    order = GetRecord("Orders", orderId)
+    Return order.status
+        `.trim();
+                } else if (modLower === 'payment' || modLower === 'payments') {
+                    code = `
+Function ProcessPayment(orderId, paymentInfo):
+    paymentId = CreateRecord("Payments", {orderId, amount: paymentInfo.amount, paymentMethod: paymentInfo.method, status: "Processing", paidAt: null})
+    success = CallPaymentGateway(paymentInfo)
+    If success:
+        UpdateRecord("Payments", paymentId, {status: "Completed", paidAt: CurrentDateTime()})
+        UpdateRecord("Orders", orderId, {status: "Paid"})
+    Else:
+        UpdateRecord("Payments", paymentId, {status: "Failed"})
+    Return success
+        `.trim();
+                } else {
+                    code = `
+Function Create${module}(data):
+    id = CreateRecord("${module}", data)
+    Return id
+
+Function Get${module}ById(id):
+    Return GetRecord("${module}", id)
+
+Function Update${module}(id, updatedData):
+    UpdateRecord("${module}", id, updatedData)
+    Return Success
+
+Function Delete${module}(id):
+    DeleteRecord("${module}", id)
+    Return Success
+        `.trim();
+                }
+                pseudoCodesnippets[module] = code;
+            });
+            return pseudoCodesnippets;
+        }
+
+        function generateArchitecture(inputText) {
+            if (!inputText || inputText.trim().length === 0) {
+                return '<p>Please enter a valid high-level business requirement above.</p>';
+            }
+            const modules = extractModules(inputText);
+            const schemas = createSchemas(modules);
+            const pseudoCodes = generatePseudoCode(modules);
+
+            let outputHtml = '';
+
+            outputHtml += `<h2>Modules Identified:</h2><ul>`;
+            modules.forEach(m => {
+                outputHtml += `<li>${m}</li>`;
+            });
+            outputHtml += `</ul>`;
+
+            outputHtml += `<h2>Schemas:</h2>`;
+            modules.forEach(m => {
+                outputHtml += `<h3>Module: ${m}</h3>`;
+                outputHtml += `<table border="1" cellpadding="4" cellspacing="0" style="border-collapse: collapse; width: 100%; color:#ddd;">`;
+                outputHtml += `<thead><tr><th style="text-align:left;">Field</th><th style="text-align:left;">Type</th><th style="text-align:left;">Description</th></tr></thead><tbody>`;
+                schemas[m].forEach(field => {
+                    outputHtml += `<tr><td>${field.field}</td><td>${field.type}</td><td>${field.description}</td></tr>`;
+                });
+                outputHtml += `</tbody></table>`;
+            });
+
+            outputHtml += `<h2>Pseudo Code Examples:</h2>`;
+            modules.forEach(m => {
+                outputHtml += `<h3>Module: ${m}</h3>`;
+                outputHtml += `<pre>${pseudoCodes[m]}</pre>`;
+            });
+
+            return outputHtml;
+        }
+
+        document.getElementById('generateBtn').addEventListener('click', () => {
+            const inputText = document.getElementById('reqInput').value;
+            const outputDiv = document.getElementById('output');
+            outputDiv.innerHTML = '<p>Analyzing and generating architecture...</p>';
+
+            setTimeout(() => {
+                const resultHtml = generateArchitecture(inputText);
+                outputDiv.innerHTML = resultHtml;
+            }, 300);
+        });
+    </script>
+</body>
+</html>
